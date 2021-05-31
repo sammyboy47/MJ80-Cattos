@@ -18,6 +18,8 @@ public class PlayerControl : MonoBehaviour
 
     public int jmpCnt, ExtraJmp;
 
+    private float jmpTime, jmpCntr;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -28,6 +30,8 @@ public class PlayerControl : MonoBehaviour
 
         if (!isClimbing && (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space)))
         {
+            // if(!isJump)
+            //     StartCoroutine(fncJmpInput());
             if (jmpCnt >= 0)
             {
                 thisRB.velocity = new Vector2(thisRB.velocity.x, jmpForce); //+= Vector2.up * jmpForce;
@@ -35,6 +39,7 @@ public class PlayerControl : MonoBehaviour
             }
             // else if (jmpCnt == 0 && isGrounded)
         }
+        
         if (Input.GetKeyDown(KeyCode.S) && canJmpThru.Count > 0)
         {
             int i = 0, j = 0; float chkDIst = Mathf.Infinity;
@@ -59,7 +64,7 @@ public class PlayerControl : MonoBehaviour
         mvInput = Input.GetAxis("Horizontal");
         thisRB.velocity = new Vector2(mvInput * mvSpd, thisRB.velocity.y);
         if (isClimbing)
-        { thisRB.velocity = new Vector2(thisRB.velocity.x*.7f, Input.GetAxis("Vertical") * mvSpd); }
+        { thisRB.velocity = new Vector2(thisRB.velocity.x * .7f, Input.GetAxis("Vertical") * mvSpd); }
 
         // if (!isFaceRight == false && mvInput > 0) { fncFlip(); }
         //              isRT   isRF
@@ -67,6 +72,8 @@ public class PlayerControl : MonoBehaviour
         //      mvD T   T       F
         if (isFaceRight != (mvInput > 0 && (mvInput != 0))) fncFlip();
 
+        // if (!(Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space)))
+        //     isJump = false;
     }
     private void OnCollisionEnter2D(Collision2D col)
     {
@@ -112,6 +119,25 @@ public class PlayerControl : MonoBehaviour
         isGrounded = Physics2D.OverlapCircle(grndChkLoc.position, grndChkRad, grndMaskLayer);
     }
     public List<platformJumpThrough> canJmpThru = new List<platformJumpThrough>();
+IEnumerator fncJmpInput()
+    {
+        // isJump = true;
+        isGrounded = false;
+        yield return new WaitForSeconds(Time.fixedDeltaTime * 1.1f);
+        while (!isGrounded)//!(Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space))){
+        {
+            yield return new WaitUntil(() => (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space)) || !isGrounded);
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space))
+            {
+                if (jmpCnt >= 0)
+                {
+                    thisRB.velocity = new Vector2(thisRB.velocity.x, jmpForce); //+= Vector2.up * jmpForce;
+                    jmpCnt--; isJump = true;
+                }
+            }
+            yield return new WaitForFixedUpdate();
+        }
+    }
     IEnumerator fncJmpThru(platformJumpThrough jmpThru)
     {
         // bool isOverlap;
